@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>店小知 - AI应答助手原型</title>
+<!-- Tailwind CSS (本地) -->
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<!-- Iconify 图标 -->
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<style>
+        @font-face {
+            font-family: 'Inter';
+            src: local('Inter');
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        /* 手机外壳容器 */
+        .phone-shell {
+            width: 375px;
+            height: 812px;
+            background: white;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 8px solid #1f2937;
+        }
+        /* 内容滚动区域 */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            background: #F9FAFB;
+            scrollbar-width: none;
+        }
+        .content-area::-webkit-scrollbar {
+            display: none;
+        }
+        /* 页面切换动画 */
+        .page {
+            display: none;
+            height: 100%;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* 微信聊天气泡 */
+        .bubble-left {
+            position: relative;
+            background: #FFFFFF;
+            border-radius: 12px;
+            border-top-left-radius: 2px;
+        }
+        .bubble-right {
+            position: relative;
+            background: #95EC69;
+            border-radius: 12px;
+            border-top-right-radius: 2px;
+        }
+        /* 适老化大字体 */
+        .elderly-text {
+            font-size: 20px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        /* 底部指示点 */
+        .page-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #D1D5DB;
+            margin: 0 3px;
+        }
+        .page-dots span.active {
+            background: #7C3AED;
+            width: 12px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="">
+<div class="phone-shell">
+<!-- 状态栏 -->
+<div class="h-11 px-6 flex justify-between items-center flex-none bg-white z-10">
+<span class="text-sm font-semibold">9:41</span>
+<div class="flex items-center gap-1.5">
+<iconify-icon icon="mdi:signal" width="16"></iconify-icon>
+<iconify-icon icon="mdi:wifi" width="16"></iconify-icon>
+<iconify-icon icon="mdi:battery" width="20"></iconify-icon>
+</div>
+</div>
+<!-- 页面 1：微信服务场景 -->
+<div class="page active" id="page1">
+<div class="bg-[#EDEDED] flex items-center justify-between px-4 py-2 flex-none">
+<button class="flex items-center gap-1 text-sm text-gray-600" onclick="switchPage('page2')">
+<iconify-icon icon="mdi:chevron-left" width="22"></iconify-icon>
+<span>返回</span>
+</button>
+<span class="font-medium text-lg">张阿姨</span>
+<iconify-icon icon="mdi:dots-horizontal" width="24"></iconify-icon>
+</div>
+<div class="content-area bg-[#EDEDED] px-4 pt-4">
+<div class="text-center text-xs text-gray-500 my-4">09:28</div>
+<div class="flex items-start gap-2 mb-6">
+<div class="w-10 h-10 rounded-md overflow-hidden bg-gray-300 flex-none">
+<img alt="Customer Avatar" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/user_assets/2026-06-25/db72c9331dfa4a8b98bf2bffcd917c78.jpg"/>
+</div>
+<div class="bubble-left px-3 py-2 text-[15px] max-w-[70%] shadow-sm">
+                        小王，我上次买的那个护眼产品，现在还能吃吗？一天吃几次？
+                    </div>
+</div>
+<div class="text-center text-xs text-gray-500 my-4">09:31</div>
+<div class="flex items-start justify-end gap-2 mb-6">
+<div class="bubble-right px-3 py-2 text-[15px] max-w-[70%] shadow-sm">
+                        稍等，我查一下哈~
+                    </div>
+<div class="w-10 h-10 rounded-md overflow-hidden bg-purple-100 flex items-center justify-center flex-none">
+<iconify-icon class="text-purple-600" icon="mdi:store-outline" width="24"></iconify-icon>
+</div>
+</div>
+</div>
+<!-- 微信底部提示操作区 -->
+<div class="p-4 bg-[#F7F7F7] border-t border-gray-200 flex-none cursor-pointer" onclick="switchPage('page2')">
+<div class="flex items-center gap-2 text-sm text-gray-400 mb-3 bg-white border border-gray-200 rounded px-2 py-1.5">
+<iconify-icon icon="mdi:emoticon-outline" width="22"></iconify-icon>
+<div class="flex-1">长按消息 复制/截图/语音 转店小知</div>
+<iconify-icon icon="mdi:plus-circle-outline" width="22"></iconify-icon>
+</div>
+<div class="flex justify-center">
+<div class="bg-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium animate-pulse shadow-lg">
+                        点击此处模拟“转店小知”
+                    </div>
+</div>
+<div class="h-6 flex items-center justify-center mt-2">
+<div class="page-dots flex">
+<span class="active"></span><span></span><span></span><span></span><span></span><span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- 页面 2：店小知首页 -->
+<div class="page" id="page2">
+<div class="bg-purple-600 px-6 py-6 text-white flex-none">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+<iconify-icon class="text-purple-600" icon="mdi:robot-happy" width="28"></iconify-icon>
+</div>
+<div>
+<h1 class="text-xl font-bold">店小知</h1>
+<p class="text-xs text-purple-100">门店产品资料问答助手</p>
+</div>
+</div>
+</div>
+<div class="content-area p-5">
+<div class="space-y-4">
+<!-- 入口卡片 1 -->
+<div class="bg-white border-2 border-purple-100 p-5 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-purple-500 transition-all shadow-sm" onclick="mockPaste()">
+<div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+<iconify-icon icon="mdi:content-paste" width="28"></iconify-icon>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-gray-800">粘贴顾客问题</h3>
+<p class="text-xs text-gray-500 mt-0.5">自动填入刚复制的文字消息</p>
+</div>
+<iconify-icon class="text-gray-300" icon="mdi:chevron-right" width="20"></iconify-icon>
+</div>
+<!-- 入口卡片 2 -->
+<div class="bg-white border-2 border-purple-100 p-5 rounded-2xl flex items-center gap-4 opacity-75">
+<div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+<iconify-icon icon="mdi:image-plus" width="28"></iconify-icon>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-gray-800">上传聊天截图</h3>
+<p class="text-xs text-gray-500 mt-0.5">AI 识图并提取关键问题</p>
+</div>
+<iconify-icon class="text-gray-300" icon="mdi:chevron-right" width="20"></iconify-icon>
+</div>
+<!-- 入口卡片 3 -->
+<div class="bg-white border-2 border-purple-100 p-5 rounded-2xl flex items-center gap-4 opacity-75">
+<div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+<iconify-icon icon="mdi:microphone" width="28"></iconify-icon>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-gray-800">语音转述问题</h3>
+<p class="text-xs text-gray-500 mt-0.5">直接对 AI 说话快速提问</p>
+</div>
+<iconify-icon class="text-gray-300" icon="mdi:chevron-right" width="20"></iconify-icon>
+</div>
+</div>
+<div class="mt-8">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-bold text-gray-800">最近咨询</h4>
+<span class="text-xs text-purple-600">查看更多</span>
+</div>
+<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+<div class="flex justify-between items-start mb-2">
+<span class="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded">护眼系列</span>
+<span class="text-[10px] text-gray-400">昨天 15:20</span>
+</div>
+<p class="text-sm text-gray-600 line-clamp-1">王阿姨：那个叶黄素是饭前还是饭后...</p>
+</div>
+</div>
+</div>
+<div class="p-4 flex-none border-t border-gray-100">
+<div class="flex justify-center mb-2">
+<div class="page-dots flex">
+<span></span><span class="active"></span><span></span><span></span><span></span><span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- 页面 3：AI 问答结果页 -->
+<div class="page" id="page3">
+<div class="bg-purple-600 px-4 h-12 flex items-center justify-between text-white flex-none">
+<button class="flex items-center" onclick="switchPage('page2')">
+<iconify-icon icon="mdi:chevron-left" width="24"></iconify-icon>
+<span class="text-sm">返回</span>
+</button>
+<span class="font-bold">店小知 AI 答复</span>
+<div class="w-6"></div>
+</div>
+<div class="content-area">
+<!-- 顾客问题 -->
+<div class="bg-gray-50 p-4 border-b border-gray-100">
+<div class="flex gap-2 items-start text-sm text-gray-500 mb-1">
+<iconify-icon icon="mdi:account-circle" width="18"></iconify-icon>
+<span class="">张阿姨问：</span>
+</div>
+<p class="text-gray-800 font-medium ml-6">我上次买的那个护眼产品，现在还能吃吗？一天吃几次？</p>
+</div>
+<!-- AI 回答 -->
+<div class="p-4 space-y-4">
+<div class="bg-white rounded-2xl p-5 shadow-sm border border-purple-100">
+<div class="flex items-center gap-2 mb-4">
+<div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+<iconify-icon icon="mdi:check-circle"></iconify-icon> 可以继续食用
+                            </div>
+</div>
+<div class="space-y-4 text-gray-700 leading-relaxed">
+<div class="border-l-4 border-purple-500 pl-3">
+<h5 class="text-sm font-bold text-purple-600 mb-1">食用方法：</h5>
+<p class="text-[15px]">该产品（<b>叶黄素酯软胶囊</b>）建议每日 1 次，每次 2 粒。</p>
+</div>
+<div class="border-l-4 border-purple-500 pl-3">
+<h5 class="text-sm font-bold text-purple-600 mb-1">最佳时间：</h5>
+<p class="text-[15px]">建议随餐或餐后即刻服用，脂溶性成分吸收效果更佳。</p>
+</div>
+<div class="bg-orange-50 p-3 rounded-lg text-xs text-orange-700">
+<b>注意：</b>开封后请密封避光保存。如发现胶囊粘连或异味请停止服用。
+                            </div>
+</div>
+</div>
+<!-- 操作按钮 -->
+<div class="grid grid-cols-2 gap-3 mt-4">
+<button class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 py-3 rounded-xl hover:bg-purple-100 transition-colors" onclick="switchPage('page5')">
+<iconify-icon class="text-purple-600 mb-1" icon="mdi:human-cane" width="24"></iconify-icon>
+<span class="text-xs font-bold text-purple-700">转为适老化话术</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-purple-50 border border-purple-200 py-3 rounded-xl hover:bg-purple-100 transition-colors" onclick="switchPage('page4')">
+<iconify-icon class="text-purple-600 mb-1" icon="mdi:file-search-outline" width="24"></iconify-icon>
+<span class="text-xs font-bold text-purple-700">查看资料来源</span>
+</button>
+</div>
+<button class="w-full bg-white border border-gray-200 py-4 rounded-xl flex items-center justify-center gap-2 shadow-sm" onclick="switchPage('page6')">
+<iconify-icon class="text-gray-500" icon="mdi:account-details-outline" width="20"></iconify-icon>
+<span class="text-sm font-medium">查看张阿姨的健康档案</span>
+</button>
+</div>
+</div>
+<div class="p-4 bg-white border-t border-gray-100 flex-none">
+<button class="w-full bg-purple-600 text-white py-3.5 rounded-full font-bold shadow-lg shadow-purple-200 active:scale-[0.98] transition-transform">
+                    一键复制并回复顾客
+                </button>
+<div class="flex justify-center mt-3">
+<div class="page-dots flex">
+<span></span><span></span><span class="active"></span><span></span><span></span><span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- 页面 4：资料来源 -->
+<div class="page" id="page4">
+<div class="bg-purple-600 px-4 h-12 flex items-center justify-between text-white flex-none">
+<button class="flex items-center" onclick="switchPage('page3')">
+<iconify-icon icon="mdi:chevron-left" width="24"></iconify-icon>
+<span class="text-sm">返回问答</span>
+</button>
+<span class="font-bold">资料来源</span>
+<div class="w-6"></div>
+</div>
+<div class="content-area p-4 space-y-4">
+<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-red-50 rounded flex items-center justify-center text-red-600 flex-none">
+<iconify-icon icon="mdi:file-pdf-box" width="28"></iconify-icon>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-sm text-gray-800 truncate">产品说明书.pdf</h4>
+<p class="text-[10px] text-gray-400">页码：第 2 页 | 可信度：100%</p>
+</div>
+</div>
+<div class="bg-gray-50 p-3 rounded text-xs text-gray-600 italic leading-relaxed">
+                        “...本品为叶黄素酯软胶囊，每粒含叶黄素酯5mg。建议用量：每日1次，每次2粒，饭后温开水送服。针对老年视疲劳有缓解作用...”
+                    </div>
+</div>
+<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-blue-50 rounded flex items-center justify-center text-blue-600 flex-none">
+<iconify-icon icon="mdi:book-open-page-variant" width="28"></iconify-icon>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-sm text-gray-800 truncate">护眼知识库 - 常见问题</h4>
+<p class="text-[10px] text-gray-400">来源：内部培训文档 | 引用频率：152次</p>
+</div>
+</div>
+<div class="bg-gray-50 p-3 rounded text-xs text-gray-600 italic leading-relaxed">
+                        “问：忘了吃怎么办？答：漏服一次不影响，第二天按量服用即可。问：随餐还是空腹？答：随餐服用吸收率提升约30%。”
+                    </div>
+</div>
+<div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-green-50 rounded flex items-center justify-center text-green-600 flex-none">
+<iconify-icon icon="mdi:link-variant" width="28"></iconify-icon>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-sm text-gray-800 truncate">品牌官方旗舰店详情页</h4>
+<p class="text-[10px] text-gray-400">最近更新：2025-05-12</p>
+</div>
+</div>
+<div class="bg-gray-50 p-3 rounded text-xs text-gray-600 italic leading-relaxed">
+                        展示了产品包装图示，明确标注了生产日期与有效期，提醒开封后 3 个月内用完。
+                    </div>
+</div>
+</div>
+<div class="p-4 bg-white border-t border-gray-100 flex-none">
+<button class="w-full border-2 border-purple-600 text-purple-600 py-3 rounded-full font-bold" onclick="switchPage('page3')">
+                    返回问答页
+                </button>
+<div class="flex justify-center mt-3">
+<div class="page-dots flex">
+<span></span><span></span><span></span><span class="active"></span><span></span><span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- 页面 5：适老化话术页 -->
+<div class="page" id="page5">
+<div class="bg-purple-600 px-4 h-12 flex items-center justify-between text-white flex-none">
+<button class="flex items-center" onclick="switchPage('page3')">
+<iconify-icon icon="mdi:chevron-left" width="24"></iconify-icon>
+<span class="text-sm">返回</span>
+</button>
+<span class="font-bold">适老化转换</span>
+<div class="w-6"></div>
+</div>
+<div class="content-area p-5">
+<div class="bg-gray-100 rounded-xl p-3 mb-6 relative">
+<div class="absolute -top-3 left-4 bg-gray-400 text-white text-[10px] px-2 py-0.5 rounded">原始回答</div>
+<p class="text-xs text-gray-500">“建议每日1次，每次2粒，随餐服用，密封保存。”</p>
+</div>
+<div class="space-y-6">
+<div class="flex gap-2">
+<div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white flex-none mt-1">
+<iconify-icon icon="mdi:robot" width="18"></iconify-icon>
+</div>
+<div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-5 shadow-sm">
+<div class="elderly-text text-gray-800 space-y-4">
+<p>张阿姨您好呀，这个产品还能接着吃的，没问题的！😊</p>
+<p>咱们<span class="text-purple-700 font-bold underline">一天吃1次</span>，<span class="text-purple-700 font-bold underline">一次吃2粒</span>就够啦！</p>
+<p>最好是<span class="text-purple-700 font-bold underline">吃完饭的时候</span>顺便把它吃了，身体吸收更好，您也容易记着，不会忘～</p>
+<p>要是还有哪里不清楚，您随时在微信上问我哈！</p>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap gap-2 px-2">
+<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded flex items-center gap-1">
+<iconify-icon icon="mdi:check"></iconify-icon> 亲切语气
+                        </span>
+<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded flex items-center gap-1">
+<iconify-icon icon="mdi:format-size"></iconify-icon> 超大字体
+                        </span>
+<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded flex items-center gap-1">
+<iconify-icon icon="mdi:chat-processing-outline"></iconify-icon> 避开术语
+                        </span>
+</div>
+</div>
+</div>
+<div class="p-4 bg-white border-t border-gray-100 flex-none space-y-3">
+<button class="w-full bg-purple-600 text-white py-4 rounded-full text-lg font-bold shadow-lg shadow-purple-100 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+<iconify-icon icon="mdi:content-copy" width="22"></iconify-icon> 复制这段贴心话
+                </button>
+<button class="w-full text-gray-500 text-sm py-2" onclick="switchPage('page3')">返回专业版回答</button>
+<div class="flex justify-center mt-1">
+<div class="page-dots flex">
+<span></span><span></span><span></span><span></span><span class="active"></span><span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- 页面 6：用户档案页 -->
+<div class="page" id="page6">
+<div class="bg-purple-600 px-4 h-12 flex items-center justify-between text-white flex-none">
+<button class="flex items-center" onclick="switchPage('page3')">
+<iconify-icon class="" icon="mdi:chevron-left" width="24"></iconify-icon>
+<span class="text-sm">返回</span>
+</button>
+<span class="font-bold">用户档案</span>
+<iconify-icon icon="mdi:account-edit-outline" width="24"></iconify-icon>
+</div>
+<div class="content-area">
+<!-- 基本信息卡片 -->
+<div class="p-5 bg-white border-b border-gray-100">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-purple-100">
+<img alt="Zhang Auntie" class="w-full h-full object-cover" src="https://modao.cc/agent-py/media/generated_images/2026-06-25/16d5e69212b242ef9ca3b605b0d86146.jpg"/>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h2 class="text-xl font-bold">张阿姨</h2>
+<span class="bg-purple-100 text-purple-600 text-[10px] px-2 py-0.5 rounded-full font-bold">VIP 会员</span>
+</div>
+<div class="flex gap-1">
+<span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded">60岁+</span>
+<span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-0.5 rounded">视力关注</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2 py-4 border-t border-gray-50">
+<div class="text-center">
+<p class="text-[10px] text-gray-400 mb-1">咨询总数</p>
+<p class="text-lg font-bold text-gray-800">12</p>
+</div>
+<div class="text-center border-x border-gray-50">
+<p class="text-[10px] text-gray-400 mb-1">累计天数</p>
+<p class="text-lg font-bold text-gray-800">186</p>
+</div>
+<div class="text-center">
+<p class="text-[10px] text-gray-400 mb-1">满意度</p>
+<p class="text-lg font-bold text-green-500">98%</p>
+</div>
+</div>
+</div>
+<!-- 历史服务时间线 -->
+<div class="p-5">
+<h3 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+<iconify-icon class="text-purple-600" icon="mdi:history"></iconify-icon>
+                        服务轨迹
+                    </h3>
+<div class="space-y-8 relative before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-0.5 before:bg-gray-100">
+<!-- 记录 1 -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-6 h-6 bg-purple-600 rounded-full border-4 border-white shadow-sm flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+</div>
+<div class="text-[10px] text-gray-400 mb-1">2026-06-25 09:31</div>
+<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-50">
+<p class="text-sm font-bold text-gray-800 mb-1">咨询护眼产品服用方法</p>
+<p class="text-xs text-gray-500">AI 推荐了随餐服用话术，并转换为适老化语境。</p>
+<div class="mt-2 flex items-center text-[10px] text-green-600 font-bold">
+<iconify-icon icon="mdi:check-circle-outline"></iconify-icon> 已完成回复
+                                </div>
+</div>
+</div>
+<!-- 记录 2 -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-6 h-6 bg-gray-200 rounded-full border-4 border-white shadow-sm flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+</div>
+<div class="text-[10px] text-gray-400 mb-1">2026-06-22 15:20</div>
+<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-50">
+<p class="text-sm font-bold text-gray-800 mb-1">咨询叶黄素与蓝莓区别</p>
+<p class="text-xs text-gray-500">回复了专业对比，张阿姨表示很清晰。</p>
+</div>
+</div>
+<!-- 记录 3 -->
+<div class="relative pl-8">
+<div class="absolute left-0 top-1.5 w-6 h-6 bg-gray-200 rounded-full border-4 border-white shadow-sm flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+</div>
+<div class="text-[10px] text-gray-400 mb-1">2026-06-15 10:05</div>
+<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-50 opacity-60">
+<p class="text-sm font-bold text-gray-800 mb-1">老花眼缓解咨询</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-white border-t border-gray-100 flex-none">
+<button class="w-full bg-purple-50 text-purple-600 py-3 rounded-full font-bold" onclick="switchPage('page2')">
+                    返回店小知首页
+                </button>
+<div class="flex justify-center mt-3">
+<div class="page-dots flex">
+<span></span><span></span><span></span><span></span><span></span><span class="active"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- 手机底部 Home Indicator -->
+<div class="h-6 flex items-center justify-center flex-none bg-white">
+<div class="w-32 h-1 bg-gray-200 rounded-full"></div>
+</div>
+</div>
+<script>
+        function switchPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // 显示目标页面
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+            // 自动回滚到顶部
+            const scrollArea = targetPage.querySelector('.content-area');
+            if (scrollArea) {
+                scrollArea.scrollTop = 0;
+            }
+        }
+
+        function mockPaste() {
+            // 模拟粘贴动作并跳转
+            const btn = event.currentTarget;
+            btn.classList.add('scale-95', 'opacity-50');
+            
+            setTimeout(() => {
+                switchPage('page3');
+                btn.classList.remove('scale-95', 'opacity-50');
+            }, 800);
+        }
+    </script>
+</body></html>
